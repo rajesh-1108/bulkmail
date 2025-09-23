@@ -11,7 +11,7 @@ app.use(express.json());
 
 // MongoDB connection
 mongoose
-  .connect("mongodb+srv://Rajesh:<db_password>@cluster0.6jlttc5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+  .connect("mongodb+srv://rajarajesh1108_db_user:uPnjXi5LZBxY19Kj@cluster0.npfaeka.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
   .then(function () {
     console.log("MongoDB connected ✅");
   })

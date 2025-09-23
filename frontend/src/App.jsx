@@ -34,7 +34,7 @@ function App() {
   function send() {
     setStatus(true);
     axios
-      .post("https://bulkmail-xj2x.onrender.com", { msg: msg, emaillist: emaillist })
+      .post("https://bulkmail-sie9.onrender.com/sendmail", { msg: msg, emaillist: emaillist })
       .then(function (data) {
         if (data.data === true) {
           alert("Email sent successfully");

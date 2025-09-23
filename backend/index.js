@@ -11,7 +11,7 @@ app.use(express.json());
 
 // MongoDB connection
 mongoose
-  .connect("mongodb+srv://rajarajesh1108_db_user:uPnjXi5LZBxY19Kj@cluster0.npfaeka.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+  .connect(process.env.MONGO_URL)
   .then(function () {
     console.log("MongoDB connected ✅");
   })

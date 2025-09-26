@@ -1,5 +1,5 @@
-const express = require("express");
-const cors = require("cors");
+const express =require("express");
+const cors=require("cors");
 const nodemailer = require("nodemailer");
 const mongoose = require("mongoose");
 
@@ -9,59 +9,104 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
+// ======================
+// 1. MongoDB Connection
+// ======================
 mongoose
-  .connect(process.env.MONGO_URL)
-  .then(function () {
-    console.log("MongoDB connected ✅");
-  })
-  .catch(function () {
-    console.log("MongoDB connection failed ❌");
-  });
+  .connect("mongodb+srv://rajarajesh1108_db_user:DI2tIf3PEpw2XLef@cluster0.npfaeka.mongodb.net/passkey?retryWrites=true&w=majority&appName=Cluster0")
+  .then(() => console.log("✅ MongoDB Atlas Connected"))
+  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
-// Credential schema (use existing bulkmail collection)
-const Credential = mongoose.model("credential",{},"bulkmail");
+// ======================
+// 2. Define Schema + Model
+// ======================
+const credentialSchema = new mongoose.Schema(
+  {
+    user: { type: String, required: true },
+    pass: { type: String, required: true },
+    preference: {
+      provider: { type: String, default: "gmail" },
+      active: { type: Boolean, default: true },
+      limitPerDay: { type: Number, default: 100 },
+    },
+  },
+  { collection: "bulkmail" } // use existing collection
+);
 
-// API: Send Bulk Emails
-app.post("/sendmail", async function (req, res) {
+const Credential = mongoose.model("Credential", credentialSchema);
+
+// ======================
+// 3. Routes
+// ======================
+
+// Add credential (insert into Atlas)
+app.post("/add-credential", async (req, res) => {
   try {
-    const { msg, emaillist } = req.body;
-
-    // Get credentials from DB
-    const data = await Credential.find();
-    if (!data || data.length === 0) {
-      return res.status(500).send(false);
-    }
-
-    // Setup nodemailer
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: data[0].toJSON().user,
-        pass: data[0].toJSON().pass,
-      },
-    });
-
-    // Send emails one by one
-    for (let i = 0; i < emaillist.length; i++) {
-      await transporter.sendMail({
-        from: data[0].toJSON().user,
-        to: emaillist[i],
-        subject: "Bulk Mail Service",
-        text: msg,
-      });
-      console.log("✅ Sent to:", emaillist[i]);
-    }
-
-    res.send(true);
-  } catch (error) {
-    console.error("❌ Email sending failed:", error);
-    res.send(false);
+    const { user, pass, preference } = req.body;
+    const newCred = new Credential({ user, pass, preference });
+    await newCred.save();
+    res.json({ success: true, message: "✅ Credential saved to Atlas" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "❌ Failed to save" });
   }
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, function () {
-  console.log("🚀 Server started on port 3000");
+// Get all credentials
+app.get("/credentials", async (req, res) => {
+  try {
+    const creds = await Credential.find();
+    res.json(creds);
+  } catch (err) {
+    console.error("❌ Failed to fetch credentials:", err);
+    res.status(500).json({ error: "Failed to fetch credentials" });
+  }
 });
+
+// Send bulk email
+app.post("/sendmail", async (req, res) => {
+  try {
+    const { msg, emaillist } = req.body;
+
+    // Fetch first active credential
+    const data = await Credential.findOne({ "preference.active": true });
+    if (!data) return res.status(500).send("❌ No credentials found");
+
+    // Nodemailer setup
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: data.user,
+        pass: data.pass, // ⚠️ must be Gmail App Password
+      },
+    });
+
+    // Send mails
+    for (let email of emaillist) {
+      await transporter.sendMail({
+        from: data.user,
+        to: email,
+        subject: "Bulk Mail Service",
+        text: msg,
+      });
+      console.log("✅ Sent to:", email);
+    }
+
+    res.json({ success: true, message: "✅ Emails sent successfully" });
+  } catch (error) {
+    console.error("❌ Email sending failed:", error);
+    res.status(500).json({ success: false, message: "❌ Failed to send" });
+  }
+});
+
+// ======================
+// 4. Start Server
+// ======================
+app.listen(3000, () => {
+  console.log("🚀 Server running at https://localhost:3000");
+});
+
+
+

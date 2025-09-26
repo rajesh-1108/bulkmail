@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import axios from "axios";
 
@@ -6,6 +6,20 @@ function App() {
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState(false);
   const [emaillist, setEmaillist] = useState([]);
+  const [credentials, setCredentials] = useState([]);
+
+  // 🔹 Load credentials from MongoDB Atlas
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/credentials")
+      .then((res) => {
+        console.log("MongoDB Data:", res.data);
+        setCredentials(res.data); // store in state
+      })
+      .catch((err) => {
+        console.error("❌ Failed to fetch credentials:", err);
+      });
+  }, []);
 
   function handleFile(event) {
     const file = event.target.files[0];
@@ -34,17 +48,17 @@ function App() {
   function send() {
     setStatus(true);
     axios
-      .post("https://bulkmail-sie9.onrender.com/sendmail", { msg: msg, emaillist: emaillist })
+      .post("https://localhost:3000/sendmail", { msg: msg, emaillist: emaillist })
       .then(function (data) {
         if (data.data === true) {
-          alert("Email sent successfully");
+          alert("✅ Email sent successfully");
         } else {
-          alert("Failed to send emails");
+          alert("❌ Failed to send emails");
         }
         setStatus(false);
       })
       .catch(() => {
-        alert("Error sending emails");
+        alert("⚠️ Error sending emails");
         setStatus(false);
       });
   }
@@ -58,9 +72,7 @@ function App() {
 
       {/* Sub Header */}
       <div className="bg-blue-600 text-white text-center p-3">
-        <p className="text-lg">
-          We help your business send multiple emails at once 📧
-        </p>
+        <p className="text-lg">We help your business send multiple emails at once 📧</p>
       </div>
 
       {/* Upload Section */}
@@ -97,6 +109,23 @@ function App() {
           >
             {status ? "Sending..." : "Send"}
           </button>
+
+          {/* Show credentials from MongoDB */}
+          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800">📌 Credentials from MongoDB:</h3>
+            {credentials.length > 0 ? (
+              <ul className="mt-2 text-sm text-gray-700">
+                {credentials.map((cred, idx) => (
+                  <li key={idx} className="border-b py-1">
+                    <b>User:</b> {cred.user} | <b>Provider:</b>{" "}
+                    {cred.preference?.provider || "gmail"}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-red-500 text-sm mt-2">No credentials found.</p>
+            )}
+          </div>
         </div>
       </main>
 
@@ -109,4 +138,5 @@ function App() {
 }
 
 export default App;
+
 

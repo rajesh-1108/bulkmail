@@ -34,12 +34,13 @@ function App() {
   function send() {
     setStatus(true);
     axios
-      .post("http://localhost:3000/sendmail", { msg: msg, emaillist: emaillist })
+      .post("https://bulkmail-2-owj4.onrender.com/sendmail", {msg: msg, emaillist: emaillist})
       .then(function (data) {
         if (data.data === true) {
           alert("Email sent successfully");
         } else {
           alert("Failed to send emails");
+          console.log(data)
         }
         setStatus(false);
       })

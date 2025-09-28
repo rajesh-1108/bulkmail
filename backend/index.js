@@ -1,3 +1,6 @@
+// 1. Load environment variables from .env
+require("dotenv").config(); 
+
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
@@ -9,14 +12,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
+// 2. MongoDB connection - Use MONGODB_URI from .env
 mongoose
-  .connect("mongodb+srv://rajarajesh1108_db_user:DI2tIf3PEpw2XLef@cluster0.npfaeka.mongodb.net/passkey?retryWrites=true&w=majority&appName=Cluster0")
+  .connect(process.env.MONGODB_URI) 
   .then(function () {
     console.log("MongoDB connected ✅");
   })
-  .catch(function () {
+  .catch(function (error) { // Added 'error' to the catch function for better debugging
     console.log("MongoDB connection failed ❌");
+    console.error(error); // Log the actual error
   });
 
 // Credential schema (use existing bulkmail collection)
@@ -30,6 +34,8 @@ app.post("/sendmail", async function (req, res) {
     // Get credentials from DB
     const data = await Credential.find();
     if (!data || data.length === 0) {
+      // It's possible the DB connection worked, but the collection is empty.
+      console.error("❌ Email credentials not found in 'bulkmail' collection.");
       return res.status(500).send(false);
     }
 
@@ -37,8 +43,10 @@ app.post("/sendmail", async function (req, res) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
+        // Your code is correctly accessing the DB credentials here.
+        // Make sure data[0].pass is the Google **App Password**, not your regular password!
         user: data[0].toJSON().user,
-        pass: data[0].toJSON().pass,
+        pass: data[0].toJSON().pass, 
       },
     });
 

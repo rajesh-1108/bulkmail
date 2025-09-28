@@ -1,5 +1,5 @@
 // 1. Load environment variables from .env
-require("dotenv").config(); 
+ 
 
 const express = require("express");
 const cors = require("cors");
@@ -14,7 +14,7 @@ app.use(express.json());
 
 // 2. MongoDB connection - Use MONGODB_URI from .env
 mongoose
-  .connect(process.env.MONGODB_URI) 
+  .connect("mongodb+srv://rajarajesh1108_db_user:123@cluster0.npfaeka.mongodb.net/passkey?retryWrites=true&w=majority&appName=Cluster0") 
   .then(function () {
     console.log("MongoDB connected ✅");
   })

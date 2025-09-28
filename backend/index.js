@@ -35,12 +35,15 @@ app.post("/sendmail", async function (req, res) {
 
     // Setup nodemailer
     const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: data[0].toJSON().user,
-        pass: data[0].toJSON().pass,
-      },
-    });
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: data[0].toJSON().user,
+    pass: data[0].toJSON().pass,
+  },
+});
+
 
     // Send emails one by one
     for (let i = 0; i < emaillist.length; i++) {

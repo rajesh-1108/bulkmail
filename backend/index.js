@@ -1,6 +1,3 @@
-// 1. Load environment variables from .env
- 
-
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
@@ -9,21 +6,17 @@ const mongoose = require("mongoose");
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: "*" // or your frontend Render domain
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// 2. MongoDB connection - Use MONGODB_URI from .env
+// MongoDB connection
 mongoose
-  .connect("mongodb+srv://rajarajesh1108_db_user:123@cluster0.npfaeka.mongodb.net/passkey?retryWrites=true&w=majority&appName=Cluster0") 
+  .connect("mongodb+srv://rajarajesh1108_db_user:123@cluster0.npfaeka.mongodb.net/passkey?retryWrites=true&w=majority&appName=Cluster0/passkey")
   .then(function () {
     console.log("MongoDB connected ✅");
   })
-  .catch(function (error) { // Added 'error' to the catch function for better debugging
+  .catch(function () {
     console.log("MongoDB connection failed ❌");
-    console.error(error); // Log the actual error
   });
 
 // Credential schema (use existing bulkmail collection)
@@ -37,22 +30,17 @@ app.post("/sendmail", async function (req, res) {
     // Get credentials from DB
     const data = await Credential.find();
     if (!data || data.length === 0) {
-      // It's possible the DB connection worked, but the collection is empty.
-      console.error("❌ Email credentials not found in 'bulkmail' collection.");
       return res.status(500).send(false);
     }
 
     // Setup nodemailer
-  const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465, // secure SSL
-  secure: true,
-  auth: {
-    user: data[0].toJSON().user,
-    pass: data[0].toJSON().pass, // MUST be Gmail App Password
-  },
-});
-
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: data[0].toJSON().user,
+        pass: data[0].toJSON().pass,
+      },
+    });
 
     // Send emails one by one
     for (let i = 0; i < emaillist.length; i++) {

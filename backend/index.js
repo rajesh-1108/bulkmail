@@ -9,7 +9,10 @@ const mongoose = require("mongoose");
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "*" // or your frontend Render domain
+}));
+
 app.use(express.json());
 
 // 2. MongoDB connection - Use MONGODB_URI from .env
@@ -40,15 +43,16 @@ app.post("/sendmail", async function (req, res) {
     }
 
     // Setup nodemailer
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        // Your code is correctly accessing the DB credentials here.
-        // Make sure data[0].pass is the Google **App Password**, not your regular password!
-        user: data[0].toJSON().user,
-        pass: data[0].toJSON().pass, 
-      },
-    });
+  const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465, // secure SSL
+  secure: true,
+  auth: {
+    user: data[0].toJSON().user,
+    pass: data[0].toJSON().pass, // MUST be Gmail App Password
+  },
+});
+
 
     // Send emails one by one
     for (let i = 0; i < emaillist.length; i++) {
